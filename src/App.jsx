@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import AdminLayout from './components/AdminLayout'
 import ProtectedRoute from './components/ProtectedRoute'
+import PageLoader from './components/PageLoader'
 
 import Home from './pages/Home'
 import Gallery from './pages/Gallery'
@@ -20,6 +21,19 @@ import OrderSuccess from './pages/OrderSuccess'
 import Dashboard from './pages/admin/Dashboard'
 import UploadArt from './pages/admin/UploadArt'
 import Orders from './pages/admin/Orders'
+
+const PageTransition = () => {
+  const location = useLocation()
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    const t = setTimeout(() => setLoading(false), 600)
+    return () => clearTimeout(t)
+  }, [location.pathname])
+
+  return loading ? <PageLoader /> : null
+}
 
 const PublicLayout = () => {
   const [cartOpen, setCartOpen] = useState(false)
@@ -90,6 +104,7 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
+          <PageTransition />
           <AppRoutes />
         </CartProvider>
       </AuthProvider>
