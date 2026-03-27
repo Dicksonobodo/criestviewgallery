@@ -20,7 +20,6 @@ export default function Gallery() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  // Reset to page 1 when search/filter changes
   const handleSearch = (val) => { setSearch(val); setPage(1) }
   const handleCategory = (val) => { setCategory(val); setPage(1) }
 
@@ -64,16 +63,22 @@ export default function Gallery() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-32 pb-28">
+          <div className="text-center py-32">
             <p className="font-[Cormorant_Garamond] text-5xl font-light text-[#ddd]">
               No artworks found
             </p>
             <p className="font-[Montserrat] text-[9px] tracking-[0.3em] uppercase text-[#ccc] mt-4">
               Try a different search or category
             </p>
+            {/* Spacer */}
+            <div className="h-24 md:h-32" />
           </div>
         ) : (
-          <div className="pb-28">
+
+          
+          <div className="pb-6">
+
+            <div className="h-10 md:h-10" />
 
             {/* Count + page indicator */}
             <div className="flex items-center justify-between mb-8">
@@ -98,7 +103,6 @@ export default function Gallery() {
             {totalPages > 1 && (
               <div className="mt-16 flex items-center justify-center gap-2">
 
-                {/* Prev */}
                 <button
                   onClick={() => goTo(page - 1)}
                   disabled={page === 1}
@@ -114,7 +118,6 @@ export default function Gallery() {
                   ← Prev
                 </button>
 
-                {/* Page numbers */}
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <button
@@ -134,7 +137,6 @@ export default function Gallery() {
                   ))}
                 </div>
 
-                {/* Next */}
                 <button
                   onClick={() => goTo(page + 1)}
                   disabled={page === totalPages}
@@ -153,8 +155,12 @@ export default function Gallery() {
               </div>
             )}
 
+            {/* Spacer before footer */}
+            <div className="h-40 md:h-40" />
+
           </div>
         )}
+
       </div>
     </main>
   )

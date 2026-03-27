@@ -77,11 +77,11 @@ export default function Navbar({ onCartOpen }) {
               </button>
             )}
 
-            <button onClick={() => setOpen(!open)} className="md:hidden cursor-pointer flex flex-col gap-5px">
-              <span className={`block w-5 h-px bg-[#0a0a0a] transition-all ${open ? 'rotate-45 translate-y-6px' : ''}`} />
-              <span className={`block w-5 h-px bg-[#0a0a0a] transition-all ${open ? 'opacity-0' : ''}`} />
-              <span className={`block w-5 h-px bg-[#0a0a0a] transition-all ${open ? '-rotate-45 -translate-y-6px' : ''}`} />
-            </button>
+<button onClick={() => setOpen(!open)} className="md:hidden cursor-pointer flex flex-col gap-[6px]">
+  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'rotate-45 translate-y-[8px]' : ''}`} />
+  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
+  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? '-rotate-45 -translate-y-[8px]' : ''}`} />
+</button>
           </div>
         </div>
       </header>
