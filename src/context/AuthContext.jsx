@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { onAuthChange } from '../firebase/auth'
-import { getRedirectResult } from 'firebase/auth'
+import { getRedirectResult, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebase/config'
 
 const AuthContext = createContext(null)
@@ -15,26 +14,36 @@ export const AuthProvider = ({ children }) => {
     let unsubscribe = () => {}
 
     const init = async () => {
-      // Check redirect result first on page load
+      let redirectUser = null
+
+      // 1. Await redirect result first
       try {
-       const result = await getRedirectResult(auth)
-console.log('Redirect result:', result) // 👈 add this
-if (result?.user) {
-  setUser(result.user)
-}
+        const result = await getRedirectResult(auth)
+        if (result?.user) {
+          redirectUser = result.user
+          setUser(result.user)
+        }
       } catch (err) {
         console.error('Redirect result error:', err)
       }
 
-      // Then start the persistent auth listener
-      unsubscribe = onAuthChange((currentUser) => {
+      // 2. Start auth listener
+      let firstEmission = true
+
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (firstEmission && redirectUser) {
+          // Firebase hasn't caught up yet after redirect — trust redirectUser
+          firstEmission = false
+          setLoading(false)
+          return
+        }
+        firstEmission = false
         setUser(currentUser)
         setLoading(false)
       })
     }
 
     init()
-
     return () => unsubscribe()
   }, [])
 

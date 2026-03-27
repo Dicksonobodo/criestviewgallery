@@ -14,8 +14,6 @@ provider.setCustomParameters({ prompt: 'select_account' })
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
 export const signInWithGoogle = () => {
-  // No async/await — must return the promise directly
-  // so it fires synchronously from the click event
   if (isMobile) {
     return signInWithRedirect(auth, provider)
   }
@@ -24,4 +22,4 @@ export const signInWithGoogle = () => {
 
 export const logOut = () => signOut(auth)
 export const onAuthChange = (callback) => onAuthStateChanged(auth, callback)
-export { getRedirectResult }
+export { getRedirectResult, onAuthStateChanged }
