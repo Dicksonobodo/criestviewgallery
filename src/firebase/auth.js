@@ -1,5 +1,6 @@
 import {
   GoogleAuthProvider,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -8,19 +9,19 @@ import {
 import { auth } from './config'
 
 const provider = new GoogleAuthProvider()
-
 provider.setCustomParameters({ prompt: 'select_account' })
 
-export const signInWithGoogle = async () => {
-  try {
-    await signInWithRedirect(auth, provider)
-  } catch (err) {
-    console.error('Sign in error:', err)
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+export const signInWithGoogle = () => {
+  // No async/await — must return the promise directly
+  // so it fires synchronously from the click event
+  if (isMobile) {
+    return signInWithRedirect(auth, provider)
   }
+  return signInWithPopup(auth, provider)
 }
 
 export const logOut = () => signOut(auth)
-
 export const onAuthChange = (callback) => onAuthStateChanged(auth, callback)
-
 export { getRedirectResult }

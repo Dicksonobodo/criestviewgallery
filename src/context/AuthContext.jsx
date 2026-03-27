@@ -17,10 +17,11 @@ export const AuthProvider = ({ children }) => {
     const init = async () => {
       // Check redirect result first on page load
       try {
-        const result = await getRedirectResult(auth)
-        if (result?.user) {
-          setUser(result.user)
-        }
+       const result = await getRedirectResult(auth)
+console.log('Redirect result:', result) // 👈 add this
+if (result?.user) {
+  setUser(result.user)
+}
       } catch (err) {
         console.error('Redirect result error:', err)
       }
