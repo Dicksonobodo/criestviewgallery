@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { onAuthChange, getRedirectResult } from '../firebase/auth'
+import { onAuthChange } from '../firebase/auth'
+import { getRedirectResult } from 'firebase/auth'
 import { auth } from '../firebase/config'
 
 const AuthContext = createContext(null)
@@ -11,18 +12,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // First check redirect result, then start auth listener
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) setUser(result.user)
+    let unsubscribe = () => {}
+
+    const init = async () => {
+      // Check redirect result first on page load
+      try {
+        const result = await getRedirectResult(auth)
+        if (result?.user) {
+          setUser(result.user)
+        }
+      } catch (err) {
+        console.error('Redirect result error:', err)
+      }
+
+      // Then start the persistent auth listener
+      unsubscribe = onAuthChange((currentUser) => {
+        setUser(currentUser)
+        setLoading(false)
       })
-      .finally(() => {
-        const unsubscribe = onAuthChange((currentUser) => {
-          setUser(currentUser)
-          setLoading(false)
-        })
-        return () => unsubscribe()
-      })
+    }
+
+    init()
+
+    return () => unsubscribe()
   }, [])
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)

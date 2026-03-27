@@ -9,13 +9,21 @@ import {
 import { auth } from './config'
 
 const provider = new GoogleAuthProvider()
+
+// Force account selection every time
+provider.setCustomParameters({ prompt: 'select_account' })
+
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
 export const signInWithGoogle = async () => {
-  if (isMobile) {
-    await signInWithRedirect(auth, provider)
-  } else {
-    await signInWithPopup(auth, provider)
+  try {
+    if (isMobile) {
+      await signInWithRedirect(auth, provider)
+    } else {
+      await signInWithPopup(auth, provider)
+    }
+  } catch (err) {
+    console.error('Sign in error:', err)
   }
 }
 
