@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-import { signInWithGoogle, logOut } from '../firebase/auth'
+import { logOut } from '../firebase/auth'
 
 export default function Navbar({ onCartOpen }) {
   const { user, isAdmin } = useAuth()
@@ -23,8 +23,7 @@ export default function Navbar({ onCartOpen }) {
     { label: 'Home', to: '/' },
     { label: 'Gallery', to: '/gallery' },
     { label: 'Shop', to: '/gallery' },
-/*     { label: 'Contact', to: '#contact' },
- */  ]
+  ]
 
   return (
     <>
@@ -72,16 +71,16 @@ export default function Navbar({ onCartOpen }) {
                 </button>
               </div>
             ) : (
-              <button onClick={signInWithGoogle} className="hidden md:block font-[Montserrat] text-[10px] tracking-[0.2em] uppercase text-[#999994] hover:text-[#0a0a0a] transition-colors cursor-pointer">
+              <Link to="/login" className="hidden md:block font-[Montserrat] text-[10px] tracking-[0.2em] uppercase text-[#999994] hover:text-[#0a0a0a] transition-colors">
                 Sign In
-              </button>
+              </Link>
             )}
 
-<button onClick={() => setOpen(!open)} className="md:hidden cursor-pointer flex flex-col gap-[6px]">
-  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'rotate-45 translate-y-[8px]' : ''}`} />
-  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
-  <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? '-rotate-45 -translate-y-[8px]' : ''}`} />
-</button>
+            <button onClick={() => setOpen(!open)} className="md:hidden cursor-pointer flex flex-col gap-[6px]">
+              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'rotate-45 translate-y-[8px]' : ''}`} />
+              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
+              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? '-rotate-45 -translate-y-[8px]' : ''}`} />
+            </button>
           </div>
         </div>
       </header>
@@ -97,7 +96,7 @@ export default function Navbar({ onCartOpen }) {
           <div className="w-8 h-px bg-[#e8e8e4]" />
           {user
             ? <button onClick={logOut} className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#999994] cursor-pointer text-left">Sign Out</button>
-            : <button onClick={signInWithGoogle} className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#999994] cursor-pointer text-left">Sign In</button>}
+            : <Link to="/login" className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#999994] text-left">Sign In</Link>}
         </div>
       </div>
     </>
