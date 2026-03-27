@@ -10,19 +10,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Handle redirect result on mobile
   useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) setUser(result.user)
-    })
-  }, [])
-
-  useEffect(() => {
-    const unsubscribe = onAuthChange((currentUser) => {
-      setUser(currentUser)
-      setLoading(false)
-    })
-    return () => unsubscribe()
+    // First check redirect result, then start auth listener
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) setUser(result.user)
+      })
+      .finally(() => {
+        const unsubscribe = onAuthChange((currentUser) => {
+          setUser(currentUser)
+          setLoading(false)
+        })
+        return () => unsubscribe()
+      })
   }, [])
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)
