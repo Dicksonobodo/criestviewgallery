@@ -1,120 +1,56 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  signOut,
-  GoogleAuthProvider
-} from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase/config'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { getRedirectResult, onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../firebase/config'
 
 const AuthContext = createContext(null)
 
-const googleProvider = new GoogleAuthProvider()
-googleProvider.setCustomParameters({ prompt: 'select_account' })
-
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+const ADMIN_EMAILS = ['obododickson7@gmail.com', 'giuliagallary36@gmail.com']
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+    let unsubscribe = () => {}
 
-        if (userDoc.exists()) {
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-            ...userDoc.data()
-          })
-        } else {
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-            role: 'customer'
-          })
+    const init = async () => {
+      let redirectUser = null
+
+      // 1. Await redirect result first
+      try {
+        const result = await getRedirectResult(auth)
+        if (result?.user) {
+          redirectUser = result.user
+          setUser(result.user)
         }
-      } else {
-        setUser(null)
+      } catch (err) {
+        console.error('Redirect result error:', err)
       }
-      setLoading(false)
-    })
 
-    return unsubscribe
+      // 2. Start auth listener
+      let firstEmission = true
+
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (firstEmission && redirectUser) {
+          // Firebase hasn't caught up yet after redirect — trust redirectUser
+          firstEmission = false
+          setLoading(false)
+          return
+        }
+        firstEmission = false
+        setUser(currentUser)
+        setLoading(false)
+      })
+    }
+
+    init()
+    return () => unsubscribe()
   }, [])
 
-  const signup = async (email, password, name) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password)
-      await setDoc(doc(db, 'users', result.user.uid), {
-        email,
-        name: name || email.split('@')[0],
-        role: 'customer',
-        createdAt: new Date().toISOString(),
-        wishlist: []
-      })
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
-  }
-
-  const login = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
-  }
-
-  const signInWithGoogle = async () => {
-    try {
-      if (isMobile) {
-        await signInWithRedirect(auth, googleProvider)
-        return { success: true }
-      }
-
-      const result = await signInWithPopup(auth, googleProvider)
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid))
-
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', result.user.uid), {
-          email: result.user.email,
-          name: result.user.displayName || result.user.email.split('@')[0],
-          role: 'customer',
-          createdAt: new Date().toISOString(),
-          wishlist: []
-        })
-      }
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
-  }
-
-  const logout = async () => {
-    try {
-      await signOut(auth)
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
-  }
-
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email)
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, signup, login, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin }}>
       {!loading && children}
     </AuthContext.Provider>
   )

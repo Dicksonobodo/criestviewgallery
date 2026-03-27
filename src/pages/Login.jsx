@@ -1,111 +1,148 @@
-import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
+const { login, signup, signInWithGoogle } = useAuth()
 
-export default function Navbar({ onCartOpen }) {
-  const { user, isAdmin, logout } = useAuth()
-  const { cartCount } = useCart()
-  const location = useLocation()
-  const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+// instead of importing from '../firebase/auth'import Button from '../components/ui/Button'
 
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 8)
-    window.addEventListener('scroll', fn)
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
+export default function Login() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
 
-  useEffect(() => { setOpen(false) }, [location.pathname])
+  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const links = [
-    { label: 'Home', to: '/' },
-    { label: 'Gallery', to: '/gallery' },
-    { label: 'Shop', to: '/gallery' },
-  ]
+  useEffect(() => { if (user) navigate('/') }, [user, navigate])
+
+  const handleSubmit = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      if (mode === 'signin') {
+        await signInWithEmail(email, password)
+      } else {
+        await signUpWithEmail(email, password)
+      }
+    } catch (err) {
+      setError(friendlyError(err.code))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const friendlyError = (code) => {
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        return 'Incorrect email or password.'
+      case 'auth/user-not-found':
+        return 'No account found with this email.'
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists.'
+      case 'auth/weak-password':
+        return 'Password must be at least 6 characters.'
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.'
+      default:
+        return 'Something went wrong. Please try again.'
+    }
+  }
 
   return (
-    <>
-      <header
-        style={{ height: 'var(--nav-h)' }}
-        className={`fixed inset-x-0 top-0 z-50 flex items-center transition-all duration-300 ${scrolled ? 'bg-[#fafafa] border-b border-[#e8e8e4]' : 'bg-[#fafafa]/95 backdrop-blur-sm'}`}
-      >
-        <div className="w-full max-w-1400px mx-auto px-6 lg:px-12 flex items-center justify-between">
+    <main style={{ paddingTop: 'var(--nav-h)' }} className="min-h-screen flex">
 
-          <Link to="/" className="font-[Cormorant_Garamond] text-[1.1rem] font-light tracking-[0.35em] uppercase">
-            The Gallery
-          </Link>
+      {/* Left */}
+      <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-20">
+        <div className="w-full max-w-sm">
+          <p className="font-[Montserrat] text-[9px] tracking-[0.5em] uppercase text-[#999994] mb-5">Welcome</p>
+          <h1 className="font-[Cormorant_Garamond] font-light mb-3" style={{ fontSize: 'clamp(2.5rem,5vw,4rem)' }}>
+            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+          </h1>
+          <p className="font-[Montserrat] text-[11px] text-[#999994] tracking-wide leading-[1.9] mb-12">
+            {mode === 'signin'
+              ? 'Sign in to save favourites, track orders and checkout seamlessly.'
+              : 'Create an account to get started with The Gallery.'}
+          </p>
 
-          <nav className="hidden md:flex items-center gap-10">
-            {links.map(({ label, to }) => (
-              <Link key={label} to={to}
-                className={`font-[Montserrat] text-[10px] tracking-[0.2em] uppercase transition-colors ${location.pathname === to ? 'text-[#0a0a0a]' : 'text-[#999994] hover:text-[#0a0a0a]'}`}>
-                {label}
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link to="/admin" className="font-[Montserrat] text-[10px] tracking-[0.2em] uppercase text-[#999994] hover:text-[#0a0a0a] transition-colors">
-                Admin
-              </Link>
-            )}
-          </nav>
+          <div className="w-10 h-px bg-[#e8e8e4] mb-10" />
 
-          <div className="flex items-center gap-5">
-            <button onClick={onCartOpen} className="relative cursor-pointer group">
-              <svg className="w-18px h-18px text-[#0a0a0a] group-hover:opacity-60 transition-opacity" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#0a0a0a] text-[#fafafa] text-[8px] font-[Montserrat] flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-
-            {user ? (
-              <div className="hidden md:flex items-center gap-3">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full object-cover" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-[#0a0a0a] flex items-center justify-center">
-                    <span className="font-[Montserrat] text-[8px] text-[#fafafa] uppercase">
-                      {user.email?.[0]}
-                    </span>
-                  </div>
-                )}
-                <button onClick={logout} className="font-[Montserrat] text-[10px] tracking-[0.2em] uppercase text-[#999994] hover:text-[#0a0a0a] transition-colors cursor-pointer">
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="hidden md:block font-[Montserrat] text-[10px] tracking-[0.2em] uppercase text-[#999994] hover:text-[#0a0a0a] transition-colors">
-                Sign In
-              </Link>
-            )}
-
-            <button onClick={() => setOpen(!open)} className="md:hidden cursor-pointer flex flex-col gap-[6px]">
-              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'rotate-45 translate-y-[8px]' : ''}`} />
-              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
-              <span className={`block w-6 h-[2px] bg-[#0a0a0a] transition-all duration-300 ${open ? '-rotate-45 -translate-y-[8px]' : ''}`} />
-            </button>
+          {/* Email/Password Fields */}
+          <div className="flex flex-col gap-4 mb-6">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full border border-[#e8e8e4] bg-transparent px-4 py-3 font-[Montserrat] text-[11px] tracking-wide text-[#1a1a1a] placeholder:text-[#999994] outline-none focus:border-[#1a1a1a] transition-colors"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              className="w-full border border-[#e8e8e4] bg-transparent px-4 py-3 font-[Montserrat] text-[11px] tracking-wide text-[#1a1a1a] placeholder:text-[#999994] outline-none focus:border-[#1a1a1a] transition-colors"
+            />
           </div>
-        </div>
-      </header>
 
-      {/* Mobile menu */}
-      <div style={{ top: 'var(--nav-h)' }}
-        className={`fixed inset-x-0 z-40 bg-[#fafafa] border-b border-[#e8e8e4] transition-all duration-300 md:hidden overflow-hidden ${open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="max-w-1400px mx-auto px-6 py-8 flex flex-col gap-5">
-          {links.map(({ label, to }) => (
-            <Link key={label} to={to} className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#0a0a0a]">{label}</Link>
-          ))}
-          {isAdmin && <Link to="/admin" className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#0a0a0a]">Admin</Link>}
-          <div className="w-8 h-px bg-[#e8e8e4]" />
-          {user
-            ? <button onClick={logout} className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#999994] cursor-pointer text-left">Sign Out</button>
-            : <Link to="/login" className="font-[Montserrat] text-[11px] tracking-[0.2em] uppercase text-[#999994] text-left">Sign In</Link>}
+          {/* Error */}
+          {error && (
+            <p className="font-[Montserrat] text-[10px] text-red-500 tracking-wide mb-4">{error}</p>
+          )}
+
+          {/* Submit */}
+          <Button size="lg" className="w-full mb-4" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+          </Button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-[#e8e8e4]" />
+            <span className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994]">or</span>
+            <div className="flex-1 h-px bg-[#e8e8e4]" />
+          </div>
+
+          {/* Google */}
+          <Button size="lg" className="w-full flex items-center gap-3" onClick={signInWithGoogle}>
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </Button>
+
+          {/* Toggle mode */}
+          <p className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994] text-center mt-6">
+            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }}
+              className="underline text-[#1a1a1a] cursor-pointer"
+            >
+              {mode === 'signin' ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+
+          <p className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994] text-center mt-3">
+            By signing in you agree to our terms & privacy policy
+          </p>
         </div>
       </div>
-    </>
+
+      {/* Right — decorative */}
+      <div className="hidden md:flex w-1/2 bg-[#0a0a0a] items-center justify-center relative overflow-hidden">
+        <h2 className="font-[Cormorant_Garamond] font-light text-[#fafafa]/[0.07] leading-none select-none text-center"
+          style={{ fontSize: 'clamp(6rem,12vw,12rem)' }}>
+          The<br />Gallery
+        </h2>
+        <p className="absolute bottom-12 left-12 font-[Montserrat] text-[9px] tracking-[0.4em] uppercase text-[#ffffff30]">
+          Original Artworks
+        </p>
+      </div>
+    </main>
   )
 }
