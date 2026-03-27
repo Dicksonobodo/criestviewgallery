@@ -1,14 +1,54 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { signInWithGoogle } from '../firebase/auth'
+import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '../firebase/auth'
 import Button from '../components/ui/Button'
 
 export default function Login() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
   useEffect(() => { if (user) navigate('/') }, [user, navigate])
+
+  const handleSubmit = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      if (mode === 'signin') {
+        await signInWithEmail(email, password)
+      } else {
+        await signUpWithEmail(email, password)
+      }
+    } catch (err) {
+      setError(friendlyError(err.code))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const friendlyError = (code) => {
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        return 'Incorrect email or password.'
+      case 'auth/user-not-found':
+        return 'No account found with this email.'
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists.'
+      case 'auth/weak-password':
+        return 'Password must be at least 6 characters.'
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.'
+      default:
+        return 'Something went wrong. Please try again.'
+    }
+  }
 
   return (
     <main style={{ paddingTop: 'var(--nav-h)' }} className="min-h-screen flex">
@@ -17,13 +57,54 @@ export default function Login() {
       <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-20">
         <div className="w-full max-w-sm">
           <p className="font-[Montserrat] text-[9px] tracking-[0.5em] uppercase text-[#999994] mb-5">Welcome</p>
-          <h1 className="font-[Cormorant_Garamond] font-light mb-3" style={{ fontSize: 'clamp(2.5rem,5vw,4rem)' }}>Sign In</h1>
+          <h1 className="font-[Cormorant_Garamond] font-light mb-3" style={{ fontSize: 'clamp(2.5rem,5vw,4rem)' }}>
+            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+          </h1>
           <p className="font-[Montserrat] text-[11px] text-[#999994] tracking-wide leading-[1.9] mb-12">
-            Sign in to save favourites, track orders and checkout seamlessly.
+            {mode === 'signin'
+              ? 'Sign in to save favourites, track orders and checkout seamlessly.'
+              : 'Create an account to get started with The Gallery.'}
           </p>
 
           <div className="w-10 h-px bg-[#e8e8e4] mb-10" />
 
+          {/* Email/Password Fields */}
+          <div className="flex flex-col gap-4 mb-6">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full border border-[#e8e8e4] bg-transparent px-4 py-3 font-[Montserrat] text-[11px] tracking-wide text-[#1a1a1a] placeholder:text-[#999994] outline-none focus:border-[#1a1a1a] transition-colors"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              className="w-full border border-[#e8e8e4] bg-transparent px-4 py-3 font-[Montserrat] text-[11px] tracking-wide text-[#1a1a1a] placeholder:text-[#999994] outline-none focus:border-[#1a1a1a] transition-colors"
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <p className="font-[Montserrat] text-[10px] text-red-500 tracking-wide mb-4">{error}</p>
+          )}
+
+          {/* Submit */}
+          <Button size="lg" className="w-full mb-4" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+          </Button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-[#e8e8e4]" />
+            <span className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994]">or</span>
+            <div className="flex-1 h-px bg-[#e8e8e4]" />
+          </div>
+
+          {/* Google */}
           <Button size="lg" className="w-full flex items-center gap-3" onClick={signInWithGoogle}>
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -34,7 +115,18 @@ export default function Login() {
             Continue with Google
           </Button>
 
+          {/* Toggle mode */}
           <p className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994] text-center mt-6">
+            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }}
+              className="underline text-[#1a1a1a] cursor-pointer"
+            >
+              {mode === 'signin' ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+
+          <p className="font-[Montserrat] text-[9px] tracking-[0.2em] uppercase text-[#999994] text-center mt-3">
             By signing in you agree to our terms & privacy policy
           </p>
         </div>

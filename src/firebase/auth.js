@@ -4,7 +4,9 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from 'firebase/auth'
 import { auth } from './config'
 
@@ -19,6 +21,12 @@ export const signInWithGoogle = () => {
   }
   return signInWithPopup(auth, provider)
 }
+
+export const signUpWithEmail = (email, password) =>
+  createUserWithEmailAndPassword(auth, email, password)
+
+export const signInWithEmail = (email, password) =>
+  signInWithEmailAndPassword(auth, email, password)
 
 export const logOut = () => signOut(auth)
 export const onAuthChange = (callback) => onAuthStateChanged(auth, callback)
