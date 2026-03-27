@@ -5,7 +5,7 @@ import { auth } from '../firebase/config'
 
 const AuthContext = createContext(null)
 
-const ADMIN_EMAILS = ['obododickson7@gmail.com', 'giuliagallary36@gmail.com', 'obododixon7@gmail.com' ]
+const ADMIN_EMAILS = ['obododickson7@gmail.com', 'giuliagallary36@gmail.com', 'obododixon@gmail.com' ]
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
